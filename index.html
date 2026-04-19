@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>PDF 图片排布工具</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -102,6 +103,7 @@
     <div class="row">
       <label class="file-label" for="pdf-input">选择 PDF 文件</label>
       <input type="file" id="pdf-input" accept="application/pdf" />
+      <button id="download-all-btn" disabled>下载所有图片 (ZIP)</button>
       <span class="status" id="upload-status">尚未上传</span>
     </div>
     <div class="pages-grid" id="pages-grid"></div>
@@ -506,6 +508,7 @@ document.getElementById("pdf-input").addEventListener("change", async (e) => {
     renderSlots();
     status.textContent = `已加载 ${pages.length} 页，主题色 ${state.bgColor}`;
     document.getElementById("render-btn").disabled = false;
+    document.getElementById("download-all-btn").disabled = false;
   } catch (err) {
     console.error(err);
     status.textContent = "解析失败：" + err.message;
@@ -557,6 +560,36 @@ document.getElementById("render-btn").addEventListener("click", async () => {
     console.error(err);
     st.textContent = "渲染失败：" + err.message;
     st.classList.add("err");
+  }
+});
+
+document.getElementById("download-all-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("download-all-btn");
+  const status = document.getElementById("upload-status");
+  if (!state.pageCanvases.length) return;
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = "打包中…";
+  try {
+    const zip = new JSZip();
+    for (let i = 0; i < state.pageCanvases.length; i++) {
+      const blob = await new Promise(r => state.pageCanvases[i].toBlob(r, "image/png"));
+      zip.file(`page-${String(i+1).padStart(2,"0")}.png`, blob);
+      btn.textContent = `打包中… ${i+1}/${state.pageCanvases.length}`;
+    }
+    const content = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(content);
+    a.download = `pdf-images-${Date.now()}.zip`;
+    a.click();
+    status.textContent = `已导出 ${state.pageCanvases.length} 张图片`;
+  } catch (err) {
+    console.error(err);
+    status.textContent = "打包失败：" + err.message;
+    status.classList.add("err");
+  } finally {
+    btn.textContent = oldText;
+    btn.disabled = false;
   }
 });
 
