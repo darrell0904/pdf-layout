@@ -182,6 +182,7 @@
     <div class="row" style="margin-bottom: 14px;">
       <button class="primary" id="render-btn" disabled>生成预览</button>
       <button id="download-btn" disabled>下载图片</button>
+      <button id="download-bg-btn" disabled>下载模糊背景</button>
       <span class="status" id="render-status"></span>
     </div>
     <div id="preview-wrap">
@@ -497,6 +498,7 @@ document.getElementById("pdf-input").addEventListener("change", async (e) => {
     }
     state.pageImages = pages;
     state.pageCanvases = canvases;
+    document.getElementById("download-bg-btn").disabled = false;
     extractThemeColors(canvases[0]);
     renderThumbs();
     // init slot count for current layout
@@ -591,6 +593,36 @@ document.getElementById("download-all-btn").addEventListener("click", async () =
     btn.textContent = oldText;
     btn.disabled = false;
   }
+});
+
+document.getElementById("download-bg-btn").addEventListener("click", () => {
+  if (!state.pageImages.length) return;
+  const ratio = document.getElementById("ratio").value.split(":").map(Number);
+  const longSide = parseInt(document.getElementById("quality").value, 10);
+  const blur = Math.max(1, parseInt(document.getElementById("blur").value, 10) || 80);
+  const [rw, rh] = ratio;
+  let W, H;
+  if (rh >= rw) { H = longSide; W = Math.round(longSide * rw / rh); }
+  else { W = longSide; H = Math.round(longSide * rh / rw); }
+
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = state.bgColor;
+  ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.filter = `blur(${blur}px) saturate(1.1)`;
+  drawCover(ctx, state.pageImages[0], -blur, -blur, W + blur*2, H + blur*2);
+  ctx.restore();
+  ctx.fillStyle = hexToRgba(state.bgColor, 0.55);
+  ctx.fillRect(0,0,W,H);
+
+  cv.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `background-blur-${Date.now()}.png`;
+    a.click();
+  }, "image/png");
 });
 
 document.getElementById("download-btn").addEventListener("click", () => {
