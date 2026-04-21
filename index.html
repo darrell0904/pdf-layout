@@ -387,6 +387,54 @@ const LAYOUTS = [
     slotLabel(i) { return i === 0 ? "主图" : `小图 ${i}`; },
   },
   {
+    id: "hero-quad",
+    name: "头图 + 四宫格",
+    desc: "顶部 1 张大图 + 下方 2×2 四宫格（5 张）",
+    fixedCount: 5,
+    preview: `<div class="blk" style="left:6%;top:5%;width:88%;height:38%"></div>
+              <div class="blk" style="left:6%;top:48%;width:42%;height:22%"></div>
+              <div class="blk" style="left:52%;top:48%;width:42%;height:22%"></div>
+              <div class="blk" style="left:6%;top:74%;width:42%;height:22%"></div>
+              <div class="blk" style="left:52%;top:74%;width:42%;height:22%"></div>`,
+    getSlots(W, H, o) {
+      const innerW = W - o.pad*2;
+      const innerH = H - o.pad*2;
+      const heroH = innerH * 0.36;
+      const gridH = innerH - heroH - o.gap;
+      const cellW = (innerW - o.gap) / 2;
+      const cellH = (gridH - o.gap) / 2;
+      const hRadius = Math.min(innerW, heroH) * 0.025;
+      const cRadius = Math.min(cellW, cellH) * 0.03;
+      const slots = [
+        { x: o.pad, y: o.pad, w: innerW, h: heroH, radius: hRadius, mode: 'contain' },
+      ];
+      for (let r=0;r<2;r++) for (let c=0;c<2;c++) {
+        slots.push({
+          x: o.pad + c*(cellW+o.gap),
+          y: o.pad + heroH + o.gap + r*(cellH+o.gap),
+          w: cellW, h: cellH, radius: cRadius, mode: 'contain',
+        });
+      }
+      return slots;
+    },
+    slotLabel(i) { return i === 0 ? "头图" : `小图 ${i}`; },
+  },
+  {
+    id: "album-2x4",
+    name: "画册 2×4",
+    desc: "2 列 × 4 行 横向幻灯片画册（8 张）",
+    fixedCount: 8,
+    preview: `<div class="blk" style="left:6%;top:5%;width:42%;height:20%"></div>
+              <div class="blk" style="left:52%;top:5%;width:42%;height:20%"></div>
+              <div class="blk" style="left:6%;top:28%;width:42%;height:20%"></div>
+              <div class="blk" style="left:52%;top:28%;width:42%;height:20%"></div>
+              <div class="blk" style="left:6%;top:51%;width:42%;height:20%"></div>
+              <div class="blk" style="left:52%;top:51%;width:42%;height:20%"></div>
+              <div class="blk" style="left:6%;top:74%;width:42%;height:20%"></div>
+              <div class="blk" style="left:52%;top:74%;width:42%;height:20%"></div>`,
+    getSlots: (W,H,o) => gridSlots(W,H,o,8,2),
+  },
+  {
     id: "collage",
     name: "错落拼贴",
     desc: "不规则尺寸交错排布（6 块）",
