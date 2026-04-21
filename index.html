@@ -103,9 +103,13 @@
     <div class="row">
       <label class="file-label" for="pdf-input">选择 PDF 文件</label>
       <input type="file" id="pdf-input" accept="application/pdf" />
+      <button id="clean-watermark-btn">去水印上传 PDF</button>
       <button id="download-all-btn" disabled>下载所有图片 (ZIP)</button>
       <span class="status" id="upload-status">尚未上传</span>
     </div>
+    <p style="color:#888;font-size:12px;margin-top:8px;line-height:1.6;">
+      <b style="color:#f5f1e8;">去水印流程：</b>点击「去水印上传 PDF」→ 在新打开的 SlideDeckCleaner 页面上传 PDF → 下载清洗后的版本 → 回到这里点「选择 PDF 文件」上传清洗版。
+    </p>
     <div class="pages-grid" id="pages-grid"></div>
   </div>
 
@@ -260,6 +264,53 @@ const LAYOUTS = [
       for (let i=0;i<sideCount;i++) {
         slots.push({
           x: o.pad, y: o.pad + i*(thumbH+thumbGap),
+          w: sideW, h: thumbH, radius: sRadius, mode: 'contain',
+        });
+      }
+      const mainCount = 3;
+      const mH = (innerH - (mainCount-1)*o.gap) / mainCount;
+      const mRadius = Math.min(mainW, mH) * 0.025;
+      for (let i=0;i<mainCount;i++) {
+        slots.push({
+          x: mainX, y: o.pad + i*(mH+o.gap),
+          w: mainW, h: mH, radius: mRadius, mode: 'contain',
+        });
+      }
+      return slots;
+    },
+    slotLabel(i) { return i < 9 ? `侧栏 ${i+1}` : `主图 ${i-8}`; },
+  },
+  {
+    id: "sidebar-right",
+    name: "侧栏画廊（右）",
+    desc: "左侧 3 张大图 + 右侧 9 张小图",
+    fixedCount: 12,
+    preview: `<div class="blk" style="left:30%;top:5%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:15.5%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:26%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:36.5%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:47%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:57.5%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:68%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:78.5%;width:20%;height:9%"></div>
+              <div class="blk" style="left:30%;top:89%;width:20%;height:6%"></div>
+              <div class="blk" style="left:55%;top:5%;width:40%;height:28%"></div>
+              <div class="blk" style="left:55%;top:35%;width:40%;height:28%"></div>
+              <div class="blk" style="left:55%;top:65%;width:40%;height:22%"></div>`,
+    getSlots(W, H, o) {
+      const slots = [];
+      const sideW = Math.max(120, W * 0.22);
+      const mainW = W - o.pad*2 - sideW - o.gap*2;
+      const mainX = o.pad;
+      const sideX = W - o.pad - sideW;
+      const innerH = H - o.pad*2;
+      const sideCount = 9;
+      const thumbGap = Math.max(4, o.gap * 0.5);
+      const thumbH = (innerH - (sideCount-1)*thumbGap) / sideCount;
+      const sRadius = Math.min(sideW, thumbH) * 0.06;
+      for (let i=0;i<sideCount;i++) {
+        slots.push({
+          x: sideX, y: o.pad + i*(thumbH+thumbGap),
           w: sideW, h: thumbH, radius: sRadius, mode: 'contain',
         });
       }
@@ -593,6 +644,13 @@ document.getElementById("download-all-btn").addEventListener("click", async () =
     btn.textContent = oldText;
     btn.disabled = false;
   }
+});
+
+document.getElementById("clean-watermark-btn").addEventListener("click", () => {
+  window.open("https://www.slidedeckcleaner.com/zh", "_blank", "noopener");
+  const status = document.getElementById("upload-status");
+  status.classList.remove("err");
+  status.textContent = "已打开 SlideDeckCleaner，请在新标签页处理 PDF 后回来上传清洗版";
 });
 
 document.getElementById("download-bg-btn").addEventListener("click", () => {
