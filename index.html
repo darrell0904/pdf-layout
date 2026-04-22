@@ -4,100 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>PDF 图片排布工具</title>
+<link rel="stylesheet" href="style.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-    background: #0f0f0f; color: #eee; min-height: 100vh; padding: 24px;
-  }
-  .container { max-width: 1400px; margin: 0 auto; }
-  h1 { font-size: 22px; margin-bottom: 6px; }
-  .sub { color: #888; font-size: 13px; margin-bottom: 20px; }
-  .panel {
-    background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px;
-    padding: 20px; margin-bottom: 18px;
-  }
-  .panel h2 { font-size: 15px; margin-bottom: 12px; color: #ddd; }
-  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
-  .file-label {
-    display: inline-block; padding: 10px 18px; background: #f5f1e8; color: #111;
-    border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;
-  }
-  .file-label:hover { background: #fff; }
-  input[type=file] { display: none; }
-  .status { color: #8adf8a; font-size: 13px; }
-  .status.err { color: #ff6b6b; }
-  select, button, input[type=number] {
-    padding: 8px 14px; border-radius: 6px; border: 1px solid #333;
-    background: #222; color: #eee; font-size: 13px; cursor: pointer;
-  }
-  input[type=number] { width: 70px; cursor: text; }
-  button.primary { background: #f5f1e8; color: #111; border-color: #f5f1e8; font-weight: 600; }
-  button.primary:hover { background: #fff; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  label.field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #bbb; }
-  .layouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-  .layout-card {
-    background: #222; border: 2px solid #2a2a2a; border-radius: 10px;
-    padding: 12px; cursor: pointer; transition: all .15s;
-  }
-  .layout-card:hover { border-color: #555; }
-  .layout-card.active { border-color: #f5f1e8; background: #2a2620; }
-  .layout-preview {
-    width: 100%; aspect-ratio: 3/4; background: #333; border-radius: 6px;
-    margin-bottom: 8px; position: relative; overflow: hidden;
-  }
-  .layout-preview .blk { position: absolute; background: #aaa; border-radius: 2px; }
-  .layout-name { font-size: 13px; font-weight: 600; color: #eee; }
-  .layout-desc { font-size: 11px; color: #888; margin-top: 2px; }
-  #preview-wrap { display: flex; justify-content: center; padding: 20px;
-    background: repeating-conic-gradient(#151515 0 25%, #1a1a1a 0 50%) 0 0/24px 24px;
-    border-radius: 8px; min-height: 300px;
-  }
-  #preview { max-width: 100%; max-height: 80vh; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-  .pages-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 8px; margin-top: 10px;
-  }
-  .pages-grid .thumb {
-    position: relative; cursor: default;
-  }
-  .pages-grid img {
-    width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 4px;
-    border: 1px solid #333; display: block;
-  }
-  .pages-grid .thumb .idx {
-    position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.7);
-    color: #fff; font-size: 11px; padding: 1px 6px; border-radius: 3px;
-  }
-  .empty-hint { color: #666; font-size: 13px; padding: 40px; text-align: center; }
-
-  .slots-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px; margin-top: 12px;
-  }
-  .slot-card {
-    background: #222; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px;
-  }
-  .slot-card .slot-label {
-    font-size: 12px; color: #aaa; margin-bottom: 6px; display: flex; justify-content: space-between;
-  }
-  .slot-card .slot-label b { color: #f5f1e8; }
-  .slot-thumb {
-    width: 100%; aspect-ratio: 3/4; background: #111; border-radius: 4px;
-    object-fit: cover; display: block; margin-bottom: 6px;
-  }
-  .slot-card select { width: 100%; font-size: 12px; padding: 6px; }
-  .slot-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; flex-wrap: wrap;}
-</style>
 </head>
 <body>
 <div class="container">
   <h1>PDF 图片排布工具</h1>
   <p class="sub">上传 PDF → 按页拆分 → 选择排布样式 → 为每个槽位分配图片 → 导出超高清图</p>
 
+  <!-- 1. 上传 -->
   <div class="panel">
     <h2>1. 上传 PDF</h2>
     <div class="row">
@@ -113,6 +29,7 @@
     <div class="pages-grid" id="pages-grid"></div>
   </div>
 
+  <!-- 2. 画布与背景 -->
   <div class="panel">
     <h2>2. 画布与背景</h2>
     <div class="row">
@@ -149,26 +66,50 @@
       </label>
       <label class="field">内边距
         <select id="padding">
-          <option value="0.03">紧凑</option>
-          <option value="0.05" selected>标准</option>
-          <option value="0.08">宽松</option>
+          <option value="0">无</option>
+          <option value="0.008">极紧</option>
+          <option value="0.018">紧凑</option>
+          <option value="0.03" selected>偏紧</option>
+          <option value="0.05">标准</option>
+          <option value="0.07">宽松</option>
+          <option value="0.1">极宽</option>
         </select>
       </label>
-      <label class="field">图片间距
+      <label class="field">纵向间距
         <select id="gap">
-          <option value="0.012">小</option>
-          <option value="0.02" selected>中</option>
-          <option value="0.035">大</option>
+          <option value="0">无</option>
+          <option value="0.004">极小</option>
+          <option value="0.008" selected>小</option>
+          <option value="0.014">偏小</option>
+          <option value="0.02">中</option>
+          <option value="0.03">偏大</option>
+          <option value="0.045">大</option>
+          <option value="0.06">极大</option>
+        </select>
+      </label>
+      <label class="field">横向间距
+        <select id="gap-x">
+          <option value="auto" selected>跟随纵向</option>
+          <option value="0">无</option>
+          <option value="0.004">极小</option>
+          <option value="0.008">小</option>
+          <option value="0.014">偏小</option>
+          <option value="0.02">中</option>
+          <option value="0.03">偏大</option>
+          <option value="0.045">大</option>
+          <option value="0.06">极大</option>
         </select>
       </label>
     </div>
   </div>
 
+  <!-- 3. 排布选择 -->
   <div class="panel">
     <h2>3. 选择排布方式</h2>
     <div class="layouts" id="layouts"></div>
   </div>
 
+  <!-- 4. 槽位分配 -->
   <div class="panel">
     <h2>4. 槽位分配</h2>
     <div class="slot-controls">
@@ -181,6 +122,7 @@
     <div class="slots-grid" id="slots-grid"></div>
   </div>
 
+  <!-- 5. 预览 + 导出 -->
   <div class="panel">
     <h2>5. 预览 &amp; 导出</h2>
     <div class="row" style="margin-bottom: 14px;">
@@ -196,650 +138,8 @@
   </div>
 </div>
 
-<script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-const state = {
-  pageImages: [],
-  pageCanvases: [],
-  bgColor: "#f5f1e8",
-  accentColor: "#1a1a1a",
-  layout: "stack",
-  slotCount: 2,
-  assignments: [],   // assignments[i] = pageIndex
-};
-
-// -------------- Layouts --------------
-// Each returns an array of slot rects: {x, y, w, h, radius, mode:'contain'|'cover'}
-const LAYOUTS = [
-  {
-    id: "stack",
-    name: "纵向堆叠",
-    desc: "多张图纵向居中排列（默认 2 张）",
-    defaultCount: 2, minCount: 2, maxCount: 6,
-    preview: `<div class="blk" style="left:18%;top:18%;width:64%;height:28%"></div>
-              <div class="blk" style="left:18%;top:54%;width:64%;height:28%"></div>`,
-    getSlots(W, H, o, n) {
-      const innerW = W - o.pad*2;
-      const innerH = H - o.pad*2;
-      const cellH = (innerH - (n-1)*o.gap) / n;
-      const radius = Math.min(innerW, cellH) * 0.03;
-      const slots = [];
-      for (let i=0;i<n;i++) {
-        slots.push({
-          x: o.pad, y: o.pad + i*(cellH+o.gap),
-          w: innerW, h: cellH, radius, mode: 'contain',
-        });
-      }
-      return slots;
-    },
-  },
-  {
-    id: "sidebar",
-    name: "侧栏画廊",
-    desc: "左侧 9 张小图 + 右侧 3 张大图（参考图1风格）",
-    fixedCount: 12,
-    preview: `<div class="blk" style="left:5%;top:5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:15.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:26%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:36.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:47%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:57.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:68%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:78.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:5%;top:89%;width:20%;height:6%"></div>
-              <div class="blk" style="left:30%;top:5%;width:65%;height:28%"></div>
-              <div class="blk" style="left:30%;top:35%;width:65%;height:28%"></div>
-              <div class="blk" style="left:30%;top:65%;width:65%;height:22%"></div>`,
-    getSlots(W, H, o) {
-      const slots = [];
-      const sideW = Math.max(120, W * 0.22);
-      const mainX = o.pad + sideW + o.gap*2;
-      const mainW = W - mainX - o.pad;
-      const innerH = H - o.pad*2;
-      const sideCount = 9;
-      const thumbGap = Math.max(4, o.gap * 0.5);
-      const thumbH = (innerH - (sideCount-1)*thumbGap) / sideCount;
-      const sRadius = Math.min(sideW, thumbH) * 0.06;
-      for (let i=0;i<sideCount;i++) {
-        slots.push({
-          x: o.pad, y: o.pad + i*(thumbH+thumbGap),
-          w: sideW, h: thumbH, radius: sRadius, mode: 'contain',
-        });
-      }
-      const mainCount = 3;
-      const mH = (innerH - (mainCount-1)*o.gap) / mainCount;
-      const mRadius = Math.min(mainW, mH) * 0.025;
-      for (let i=0;i<mainCount;i++) {
-        slots.push({
-          x: mainX, y: o.pad + i*(mH+o.gap),
-          w: mainW, h: mH, radius: mRadius, mode: 'contain',
-        });
-      }
-      return slots;
-    },
-    slotLabel(i) { return i < 9 ? `侧栏 ${i+1}` : `主图 ${i-8}`; },
-  },
-  {
-    id: "sidebar-right",
-    name: "侧栏画廊（右）",
-    desc: "左侧 3 张大图 + 右侧 9 张小图",
-    fixedCount: 12,
-    preview: `<div class="blk" style="left:30%;top:5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:15.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:26%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:36.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:47%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:57.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:68%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:78.5%;width:20%;height:9%"></div>
-              <div class="blk" style="left:30%;top:89%;width:20%;height:6%"></div>
-              <div class="blk" style="left:55%;top:5%;width:40%;height:28%"></div>
-              <div class="blk" style="left:55%;top:35%;width:40%;height:28%"></div>
-              <div class="blk" style="left:55%;top:65%;width:40%;height:22%"></div>`,
-    getSlots(W, H, o) {
-      const slots = [];
-      const sideW = Math.max(120, W * 0.22);
-      const mainW = W - o.pad*2 - sideW - o.gap*2;
-      const mainX = o.pad;
-      const sideX = W - o.pad - sideW;
-      const innerH = H - o.pad*2;
-      const sideCount = 9;
-      const thumbGap = Math.max(4, o.gap * 0.5);
-      const thumbH = (innerH - (sideCount-1)*thumbGap) / sideCount;
-      const sRadius = Math.min(sideW, thumbH) * 0.06;
-      for (let i=0;i<sideCount;i++) {
-        slots.push({
-          x: sideX, y: o.pad + i*(thumbH+thumbGap),
-          w: sideW, h: thumbH, radius: sRadius, mode: 'contain',
-        });
-      }
-      const mainCount = 3;
-      const mH = (innerH - (mainCount-1)*o.gap) / mainCount;
-      const mRadius = Math.min(mainW, mH) * 0.025;
-      for (let i=0;i<mainCount;i++) {
-        slots.push({
-          x: mainX, y: o.pad + i*(mH+o.gap),
-          w: mainW, h: mH, radius: mRadius, mode: 'contain',
-        });
-      }
-      return slots;
-    },
-    slotLabel(i) { return i < 9 ? `侧栏 ${i+1}` : `主图 ${i-8}`; },
-  },
-  {
-    id: "grid2",
-    name: "2 列网格",
-    desc: "两列等分排布",
-    defaultCount: 6, minCount: 2, maxCount: 20,
-    preview: `<div class="blk" style="left:8%;top:8%;width:38%;height:26%"></div>
-              <div class="blk" style="left:54%;top:8%;width:38%;height:26%"></div>
-              <div class="blk" style="left:8%;top:37%;width:38%;height:26%"></div>
-              <div class="blk" style="left:54%;top:37%;width:38%;height:26%"></div>
-              <div class="blk" style="left:8%;top:66%;width:38%;height:26%"></div>
-              <div class="blk" style="left:54%;top:66%;width:38%;height:26%"></div>`,
-    getSlots: (W,H,o,n) => gridSlots(W,H,o,n,2),
-  },
-  {
-    id: "grid3",
-    name: "3 列网格",
-    desc: "三列等分，适合多图",
-    defaultCount: 9, minCount: 3, maxCount: 30,
-    preview: `<div class="blk" style="left:6%;top:8%;width:27%;height:20%"></div>
-              <div class="blk" style="left:36.5%;top:8%;width:27%;height:20%"></div>
-              <div class="blk" style="left:67%;top:8%;width:27%;height:20%"></div>
-              <div class="blk" style="left:6%;top:31%;width:27%;height:20%"></div>
-              <div class="blk" style="left:36.5%;top:31%;width:27%;height:20%"></div>
-              <div class="blk" style="left:67%;top:31%;width:27%;height:20%"></div>
-              <div class="blk" style="left:6%;top:54%;width:27%;height:20%"></div>
-              <div class="blk" style="left:36.5%;top:54%;width:27%;height:20%"></div>
-              <div class="blk" style="left:67%;top:54%;width:27%;height:20%"></div>`,
-    getSlots: (W,H,o,n) => gridSlots(W,H,o,n,3),
-  },
-  {
-    id: "poster",
-    name: "海报式",
-    desc: "1 大图 + 底部小图条",
-    defaultCount: 5, minCount: 3, maxCount: 8,
-    preview: `<div class="blk" style="left:8%;top:8%;width:84%;height:58%"></div>
-              <div class="blk" style="left:8%;top:70%;width:20%;height:20%"></div>
-              <div class="blk" style="left:30%;top:70%;width:20%;height:20%"></div>
-              <div class="blk" style="left:52%;top:70%;width:20%;height:20%"></div>
-              <div class="blk" style="left:74%;top:70%;width:18%;height:20%"></div>`,
-    getSlots(W,H,o,n) {
-      const innerW = W - o.pad*2;
-      const innerH = H - o.pad*2;
-      const heroH = innerH * 0.62;
-      const smallH = innerH - heroH - o.gap;
-      const radius = Math.min(innerW, heroH) * 0.03;
-      const slots = [{ x:o.pad, y:o.pad, w:innerW, h:heroH, radius, mode:'contain' }];
-      const smallCount = n - 1;
-      const sw = (innerW - (smallCount-1)*o.gap) / smallCount;
-      const sRadius = Math.min(sw, smallH) * 0.05;
-      for (let i=0;i<smallCount;i++) {
-        slots.push({
-          x: o.pad + i*(sw+o.gap), y: o.pad + heroH + o.gap,
-          w: sw, h: smallH, radius: sRadius, mode: 'contain',
-        });
-      }
-      return slots;
-    },
-    slotLabel(i) { return i === 0 ? "主图" : `小图 ${i}`; },
-  },
-  {
-    id: "hero-quad",
-    name: "头图 + 四宫格",
-    desc: "顶部 1 张大图 + 下方 2×2 四宫格（5 张）",
-    fixedCount: 5,
-    preview: `<div class="blk" style="left:6%;top:5%;width:88%;height:38%"></div>
-              <div class="blk" style="left:6%;top:48%;width:42%;height:22%"></div>
-              <div class="blk" style="left:52%;top:48%;width:42%;height:22%"></div>
-              <div class="blk" style="left:6%;top:74%;width:42%;height:22%"></div>
-              <div class="blk" style="left:52%;top:74%;width:42%;height:22%"></div>`,
-    getSlots(W, H, o) {
-      const innerW = W - o.pad*2;
-      const innerH = H - o.pad*2;
-      const heroH = innerH * 0.36;
-      const gridH = innerH - heroH - o.gap;
-      const cellW = (innerW - o.gap) / 2;
-      const cellH = (gridH - o.gap) / 2;
-      const hRadius = Math.min(innerW, heroH) * 0.025;
-      const cRadius = Math.min(cellW, cellH) * 0.03;
-      const slots = [
-        { x: o.pad, y: o.pad, w: innerW, h: heroH, radius: hRadius, mode: 'contain' },
-      ];
-      for (let r=0;r<2;r++) for (let c=0;c<2;c++) {
-        slots.push({
-          x: o.pad + c*(cellW+o.gap),
-          y: o.pad + heroH + o.gap + r*(cellH+o.gap),
-          w: cellW, h: cellH, radius: cRadius, mode: 'contain',
-        });
-      }
-      return slots;
-    },
-    slotLabel(i) { return i === 0 ? "头图" : `小图 ${i}`; },
-  },
-  {
-    id: "album-2x4",
-    name: "画册 2×4",
-    desc: "2 列 × 4 行 横向幻灯片画册（8 张）",
-    fixedCount: 8,
-    preview: `<div class="blk" style="left:6%;top:5%;width:42%;height:20%"></div>
-              <div class="blk" style="left:52%;top:5%;width:42%;height:20%"></div>
-              <div class="blk" style="left:6%;top:28%;width:42%;height:20%"></div>
-              <div class="blk" style="left:52%;top:28%;width:42%;height:20%"></div>
-              <div class="blk" style="left:6%;top:51%;width:42%;height:20%"></div>
-              <div class="blk" style="left:52%;top:51%;width:42%;height:20%"></div>
-              <div class="blk" style="left:6%;top:74%;width:42%;height:20%"></div>
-              <div class="blk" style="left:52%;top:74%;width:42%;height:20%"></div>`,
-    getSlots: (W,H,o) => gridSlots(W,H,o,8,2),
-  },
-  {
-    id: "collage",
-    name: "错落拼贴",
-    desc: "不规则尺寸交错排布（6 块）",
-    fixedCount: 6,
-    preview: `<div class="blk" style="left:6%;top:6%;width:50%;height:34%"></div>
-              <div class="blk" style="left:60%;top:10%;width:34%;height:22%"></div>
-              <div class="blk" style="left:60%;top:36%;width:34%;height:28%"></div>
-              <div class="blk" style="left:6%;top:44%;width:28%;height:26%"></div>
-              <div class="blk" style="left:38%;top:50%;width:44%;height:30%"></div>
-              <div class="blk" style="left:6%;top:74%;width:60%;height:18%"></div>`,
-    getSlots(W,H,o) {
-      const specs = [
-        [0.00, 0.00, 0.55, 0.38],
-        [0.58, 0.04, 0.38, 0.26],
-        [0.58, 0.32, 0.38, 0.32],
-        [0.00, 0.41, 0.32, 0.30],
-        [0.35, 0.48, 0.52, 0.34],
-        [0.00, 0.74, 0.68, 0.22],
-      ];
-      const innerW = W - o.pad*2, innerH = H - o.pad*2;
-      return specs.map(s => ({
-        x: o.pad + s[0]*innerW, y: o.pad + s[1]*innerH,
-        w: s[2]*innerW, h: s[3]*innerH,
-        radius: Math.min(s[2]*innerW, s[3]*innerH) * 0.04,
-        mode: 'cover',
-      }));
-    },
-  },
-];
-
-function gridSlots(W, H, o, n, cols) {
-  const rows = Math.ceil(n / cols);
-  const innerW = W - o.pad*2, innerH = H - o.pad*2;
-  const cellW = (innerW - (cols-1)*o.gap) / cols;
-  const cellH = (innerH - (rows-1)*o.gap) / rows;
-  const radius = Math.min(cellW, cellH) * 0.04;
-  const slots = [];
-  for (let i=0;i<n;i++) {
-    const r = Math.floor(i/cols), c = i%cols;
-    slots.push({
-      x: o.pad + c*(cellW+o.gap),
-      y: o.pad + r*(cellH+o.gap),
-      w: cellW, h: cellH, radius, mode: 'contain',
-    });
-  }
-  return slots;
-}
-
-function getLayout() { return LAYOUTS.find(L => L.id === state.layout); }
-
-function getCurrentSlotCount() {
-  const L = getLayout();
-  if (L.fixedCount) return L.fixedCount;
-  return state.slotCount;
-}
-
-// -------------- UI --------------
-function renderLayouts() {
-  const c = document.getElementById("layouts");
-  c.innerHTML = "";
-  LAYOUTS.forEach(L => {
-    const el = document.createElement("div");
-    el.className = "layout-card" + (L.id === state.layout ? " active" : "");
-    el.innerHTML = `
-      <div class="layout-preview">${L.preview}</div>
-      <div class="layout-name">${L.name}</div>
-      <div class="layout-desc">${L.desc}</div>`;
-    el.onclick = () => {
-      state.layout = L.id;
-      const L2 = getLayout();
-      state.slotCount = L2.fixedCount || L2.defaultCount || 3;
-      document.getElementById("slotcount").value = state.slotCount;
-      document.getElementById("slotcount-wrap").style.display = L2.fixedCount ? "none" : "";
-      autoAssign();
-      renderLayouts();
-      renderSlots();
-    };
-    c.appendChild(el);
-  });
-}
-renderLayouts();
-
-document.getElementById("slotcount").addEventListener("input", (e) => {
-  const L = getLayout();
-  let v = parseInt(e.target.value, 10) || 1;
-  if (L.minCount) v = Math.max(L.minCount, v);
-  if (L.maxCount) v = Math.min(L.maxCount, v);
-  state.slotCount = v;
-  autoAssign();
-  renderSlots();
-});
-
-document.getElementById("auto-assign").addEventListener("click", () => {
-  autoAssign();
-  renderSlots();
-});
-
-function autoAssign() {
-  const n = getCurrentSlotCount();
-  const pn = state.pageImages.length;
-  state.assignments = [];
-  for (let i=0;i<n;i++) {
-    state.assignments.push(pn > 0 ? (i % pn) : 0);
-  }
-}
-
-function renderSlots() {
-  const grid = document.getElementById("slots-grid");
-  grid.innerHTML = "";
-  const hint = document.getElementById("slot-hint");
-  if (!state.pageImages.length) { hint.textContent = "请先上传 PDF"; return; }
-  hint.textContent = `共 ${getCurrentSlotCount()} 个槽位 · ${state.pageImages.length} 页可选`;
-
-  const L = getLayout();
-  const n = getCurrentSlotCount();
-  for (let i=0;i<n;i++) {
-    const pageIdx = state.assignments[i] ?? 0;
-    const card = document.createElement("div");
-    card.className = "slot-card";
-    const label = L.slotLabel ? L.slotLabel(i) : `槽位 ${i+1}`;
-    const options = state.pageImages.map((_, p) =>
-      `<option value="${p}" ${p === pageIdx ? "selected" : ""}>第 ${p+1} 页</option>`
-    ).join("");
-    card.innerHTML = `
-      <div class="slot-label"><b>${label}</b><span>#${i+1}</span></div>
-      <img class="slot-thumb" src="${state.pageImages[pageIdx]?.src || ""}" />
-      <select data-slot="${i}">${options}</select>`;
-    card.querySelector("select").addEventListener("change", (e) => {
-      const s = parseInt(e.target.dataset.slot, 10);
-      const v = parseInt(e.target.value, 10);
-      state.assignments[s] = v;
-      card.querySelector(".slot-thumb").src = state.pageImages[v].src;
-    });
-    grid.appendChild(card);
-  }
-}
-
-// -------------- PDF Loading --------------
-document.getElementById("pdf-input").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const status = document.getElementById("upload-status");
-  status.textContent = "解析中…"; status.classList.remove("err");
-  try {
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    const pages = [], canvases = [];
-    for (let i=1; i<=pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 2.5 });
-      const cv = document.createElement("canvas");
-      cv.width = viewport.width; cv.height = viewport.height;
-      const cctx = cv.getContext("2d");
-      await page.render({ canvasContext: cctx, viewport }).promise;
-      canvases.push(cv);
-      const img = new Image();
-      img.src = cv.toDataURL("image/png");
-      await new Promise(r => img.onload = r);
-      pages.push(img);
-    }
-    state.pageImages = pages;
-    state.pageCanvases = canvases;
-    document.getElementById("download-bg-btn").disabled = false;
-    extractThemeColors(canvases[0]);
-    renderThumbs();
-    // init slot count for current layout
-    const L = getLayout();
-    state.slotCount = L.fixedCount || L.defaultCount || 3;
-    document.getElementById("slotcount").value = state.slotCount;
-    document.getElementById("slotcount-wrap").style.display = L.fixedCount ? "none" : "";
-    autoAssign();
-    renderSlots();
-    status.textContent = `已加载 ${pages.length} 页，主题色 ${state.bgColor}`;
-    document.getElementById("render-btn").disabled = false;
-    document.getElementById("download-all-btn").disabled = false;
-  } catch (err) {
-    console.error(err);
-    status.textContent = "解析失败：" + err.message;
-    status.classList.add("err");
-  }
-});
-
-function renderThumbs() {
-  const g = document.getElementById("pages-grid");
-  g.innerHTML = "";
-  state.pageImages.forEach((img, i) => {
-    const wrap = document.createElement("div");
-    wrap.className = "thumb";
-    wrap.innerHTML = `<img src="${img.src}" title="第 ${i+1} 页" /><span class="idx">第 ${i+1} 页</span>`;
-    g.appendChild(wrap);
-  });
-}
-
-function extractThemeColors(canvas) {
-  const ctx = canvas.getContext("2d");
-  const w = canvas.width, h = canvas.height;
-  const pts = [[0,0],[w-1,0],[0,h-1],[w-1,h-1],[w/2|0,0],[w/2|0,h-1],[0,h/2|0],[w-1,h/2|0]];
-  const samples = pts.map(([x,y]) => {
-    const d = ctx.getImageData(x,y,1,1).data;
-    return [d[0],d[1],d[2]];
-  });
-  const bg = samples.reduce((a,b) => (a[0]+a[1]+a[2] > b[0]+b[1]+b[2] ? a : b));
-  state.bgColor = rgbToHex(bg[0],bg[1],bg[2]);
-  const step = 40;
-  let dark = [0,0,0], dmin = 999;
-  for (let y=0;y<h;y+=step) for (let x=0;x<w;x+=step) {
-    const d = ctx.getImageData(x,y,1,1).data;
-    const l = d[0]+d[1]+d[2];
-    if (l < dmin) { dmin = l; dark = [d[0],d[1],d[2]]; }
-  }
-  state.accentColor = rgbToHex(dark[0],dark[1],dark[2]);
-}
-const rgbToHex = (r,g,b) => "#" + [r,g,b].map(v => v.toString(16).padStart(2,"0")).join("");
-
-// -------------- Render --------------
-document.getElementById("render-btn").addEventListener("click", async () => {
-  const st = document.getElementById("render-status");
-  st.textContent = "渲染中…"; st.classList.remove("err");
-  try {
-    await renderPreview();
-    st.textContent = "已生成，可下载";
-    document.getElementById("download-btn").disabled = false;
-  } catch (err) {
-    console.error(err);
-    st.textContent = "渲染失败：" + err.message;
-    st.classList.add("err");
-  }
-});
-
-document.getElementById("download-all-btn").addEventListener("click", async () => {
-  const btn = document.getElementById("download-all-btn");
-  const status = document.getElementById("upload-status");
-  if (!state.pageCanvases.length) return;
-  btn.disabled = true;
-  const oldText = btn.textContent;
-  btn.textContent = "打包中…";
-  try {
-    const zip = new JSZip();
-    for (let i = 0; i < state.pageCanvases.length; i++) {
-      const blob = await new Promise(r => state.pageCanvases[i].toBlob(r, "image/png"));
-      zip.file(`page-${String(i+1).padStart(2,"0")}.png`, blob);
-      btn.textContent = `打包中… ${i+1}/${state.pageCanvases.length}`;
-    }
-    const content = await zip.generateAsync({ type: "blob" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(content);
-    a.download = `pdf-images-${Date.now()}.zip`;
-    a.click();
-    status.textContent = `已导出 ${state.pageCanvases.length} 张图片`;
-  } catch (err) {
-    console.error(err);
-    status.textContent = "打包失败：" + err.message;
-    status.classList.add("err");
-  } finally {
-    btn.textContent = oldText;
-    btn.disabled = false;
-  }
-});
-
-document.getElementById("clean-watermark-btn").addEventListener("click", () => {
-  window.open("https://www.slidedeckcleaner.com/zh", "_blank", "noopener");
-  const status = document.getElementById("upload-status");
-  status.classList.remove("err");
-  status.textContent = "已打开 SlideDeckCleaner，请在新标签页处理 PDF 后回来上传清洗版";
-});
-
-document.getElementById("download-bg-btn").addEventListener("click", () => {
-  if (!state.pageImages.length) return;
-  const ratio = document.getElementById("ratio").value.split(":").map(Number);
-  const longSide = parseInt(document.getElementById("quality").value, 10);
-  const blur = Math.max(1, parseInt(document.getElementById("blur").value, 10) || 80);
-  const [rw, rh] = ratio;
-  let W, H;
-  if (rh >= rw) { H = longSide; W = Math.round(longSide * rw / rh); }
-  else { W = longSide; H = Math.round(longSide * rh / rw); }
-
-  const cv = document.createElement("canvas");
-  cv.width = W; cv.height = H;
-  const ctx = cv.getContext("2d");
-  ctx.fillStyle = state.bgColor;
-  ctx.fillRect(0,0,W,H);
-  ctx.save();
-  ctx.filter = `blur(${blur}px) saturate(1.1)`;
-  drawCover(ctx, state.pageImages[0], -blur, -blur, W + blur*2, H + blur*2);
-  ctx.restore();
-  ctx.fillStyle = hexToRgba(state.bgColor, 0.55);
-  ctx.fillRect(0,0,W,H);
-
-  cv.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `background-blur-${Date.now()}.png`;
-    a.click();
-  }, "image/png");
-});
-
-document.getElementById("download-btn").addEventListener("click", () => {
-  const cv = document.getElementById("preview");
-  cv.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `layout-${state.layout}-${Date.now()}.png`;
-    a.click();
-  }, "image/png");
-});
-
-async function renderPreview() {
-  if (!state.pageImages.length) throw new Error("请先上传 PDF");
-  const ratio = document.getElementById("ratio").value.split(":").map(Number);
-  const longSide = parseInt(document.getElementById("quality").value, 10);
-  const blur = parseInt(document.getElementById("blur").value, 10);
-  const bgSource = document.getElementById("bg-source").value;
-  const padPct = parseFloat(document.getElementById("padding").value);
-  const gapPct = parseFloat(document.getElementById("gap").value);
-
-  const [rw, rh] = ratio;
-  let W, H;
-  if (rh >= rw) { H = longSide; W = Math.round(longSide * rw / rh); }
-  else { W = longSide; H = Math.round(longSide * rh / rw); }
-
-  const cv = document.getElementById("preview");
-  cv.width = W; cv.height = H;
-  const ctx = cv.getContext("2d");
-
-  // background solid
-  ctx.fillStyle = state.bgColor;
-  ctx.fillRect(0,0,W,H);
-
-  // gaussian blurred background
-  if (blur > 0 && bgSource === "auto" && state.pageImages[0]) {
-    ctx.save();
-    ctx.filter = `blur(${blur}px) saturate(1.1)`;
-    drawCover(ctx, state.pageImages[0], -blur, -blur, W + blur*2, H + blur*2);
-    ctx.restore();
-    ctx.fillStyle = hexToRgba(state.bgColor, 0.55);
-    ctx.fillRect(0,0,W,H);
-  }
-
-  const L = getLayout();
-  const n = getCurrentSlotCount();
-  const opts = {
-    pad: Math.round(Math.min(W,H) * padPct),
-    gap: Math.round(Math.min(W,H) * gapPct),
-  };
-  const slots = L.getSlots(W, H, opts, n);
-
-  for (let i = 0; i < slots.length; i++) {
-    const s = slots[i];
-    const pageIdx = state.assignments[i] ?? (i % state.pageImages.length);
-    const img = state.pageImages[pageIdx];
-    if (!img) continue;
-    drawIntoSlot(ctx, img, s);
-  }
-
-  cv.style.display = "block";
-  document.getElementById("empty-hint").style.display = "none";
-}
-
-function drawIntoSlot(ctx, img, s) {
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.25)";
-  ctx.shadowBlur = Math.max(10, s.w * 0.015);
-  ctx.shadowOffsetY = Math.max(3, s.w * 0.006);
-  if (s.mode === 'cover') {
-    if (s.radius) { roundRectPath(ctx, s.x, s.y, s.w, s.h, s.radius); ctx.clip(); }
-    const ir = img.width / img.height, tr = s.w / s.h;
-    let sx, sy, sw, sh;
-    if (ir > tr) { sh = img.height; sw = sh * tr; sx = (img.width - sw)/2; sy = 0; }
-    else { sw = img.width; sh = sw / tr; sx = 0; sy = (img.height - sh)/2; }
-    ctx.drawImage(img, sx, sy, sw, sh, s.x, s.y, s.w, s.h);
-  } else {
-    // contain: fit inside while preserving aspect
-    const ir = img.width / img.height, tr = s.w / s.h;
-    let dw, dh;
-    if (ir > tr) { dw = s.w; dh = s.w / ir; }
-    else { dh = s.h; dw = s.h * ir; }
-    const dx = s.x + (s.w - dw)/2, dy = s.y + (s.h - dh)/2;
-    if (s.radius) { roundRectPath(ctx, dx, dy, dw, dh, s.radius); ctx.clip(); }
-    ctx.drawImage(img, dx, dy, dw, dh);
-  }
-  ctx.restore();
-}
-
-function hexToRgba(hex, a) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
-}
-
-function drawCover(ctx, img, x, y, w, h) {
-  const ir = img.width / img.height, tr = w / h;
-  let sx, sy, sw, sh;
-  if (ir > tr) { sh = img.height; sw = sh * tr; sx = (img.width - sw)/2; sy = 0; }
-  else { sw = img.width; sh = sw / tr; sx = 0; sy = (img.height - sh)/2; }
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-}
-
-function roundRectPath(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y, x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x, y+h, r);
-  ctx.arcTo(x, y+h, x, y, r);
-  ctx.arcTo(x, y, x+w, y, r);
-  ctx.closePath();
-}
-</script>
+<!-- LAYOUTS 必须先于 app.js 加载 -->
+<script src="layouts.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
