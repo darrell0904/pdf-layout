@@ -33,13 +33,23 @@ const LAYOUTS = [
     getSlots(W, H, o, n) {
       const innerW = W - o.pad*2;
       const innerH = H - o.pad*2;
-      const cellH = (innerH - (n-1)*o.gap) / n;
-      const radius = Math.min(innerW, cellH) * 0.03;
+      // 每张图按 16:9，整块垂直居中；若溢出再等比缩放
+      let cellW = innerW;
+      let cellH = cellW * 9 / 16;
+      let totalH = n*cellH + (n-1)*o.gap;
+      if (totalH > innerH) {
+        const k = innerH / totalH;
+        cellW *= k; cellH *= k;
+        totalH = n*cellH + (n-1)*o.gap;
+      }
+      const xStart = o.pad + (innerW - cellW) / 2;
+      const yStart = o.pad + (innerH - totalH) / 2;
+      const radius = Math.min(cellW, cellH) * 0.03;
       const slots = [];
       for (let i=0;i<n;i++) {
         slots.push({
-          x: o.pad, y: o.pad + i*(cellH+o.gap),
-          w: innerW, h: cellH, radius, mode: 'contain',
+          x: xStart, y: yStart + i*(cellH+o.gap),
+          w: cellW, h: cellH, radius, mode: 'cover',
         });
       }
       return slots;
