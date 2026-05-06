@@ -23,13 +23,43 @@ function getCurrentSlotCount() {
   const L = getLayout();
   return L.fixedCount || state.slotCount;
 }
+function getSelectedAspectRatios(n) {
+  const ratios = [];
+  for (let i=0;i<n;i++) {
+    const pageIdx = state.assignments[i] ?? (i % Math.max(state.pageImages.length, 1));
+    const img = state.pageImages[pageIdx];
+    ratios.push(img ? img.width / img.height : 16 / 9);
+  }
+  return ratios;
+}
 
 // ---------- 画布尺寸 ----------
 function getCanvasSize() {
-  const [rw, rh] = $("ratio").value.split(":").map(Number);
   const longSide = parseInt($("quality").value, 10);
+  const L = getLayout();
+  if (L?.autoCanvas === "vertical-stack") {
+    const n = getCurrentSlotCount();
+    const ratios = getSelectedAspectRatios(n);
+    const padPct = parseFloat($("padding").value);
+    const gapPct = parseFloat($("gap").value);
+    const imageHPerW = ratios.reduce((sum, ratio) => sum + 1 / Math.max(ratio, 0.01), 0);
+    const heightPerWidth = 2*padPct + (1 - 2*padPct)*imageHPerW + Math.max(0, n-1)*gapPct;
+    if (heightPerWidth >= 1) {
+      return { W: Math.round(longSide / heightPerWidth), H: longSide };
+    }
+    return { W: longSide, H: Math.round(longSide * heightPerWidth) };
+  }
+  const [rw, rh] = $("ratio").value.split(":").map(Number);
   if (rh >= rw) return { W: Math.round(longSide * rw / rh), H: longSide };
   return { W: longSide, H: Math.round(longSide * rh / rw) };
+}
+
+function syncLayoutControls() {
+  const L = getLayout();
+  const ratio = $("ratio");
+  const autoCanvas = Boolean(L?.autoCanvas);
+  ratio.disabled = autoCanvas;
+  ratio.title = autoCanvas ? "该排版会根据图片实际比例自动计算画布尺寸" : "";
 }
 
 // ---------- 排布选择 UI ----------
@@ -49,6 +79,7 @@ function renderLayouts() {
       state.slotCount = L2.fixedCount || L2.defaultCount || 3;
       $("slotcount").value = state.slotCount;
       $("slotcount-wrap").style.display = L2.fixedCount ? "none" : "";
+      syncLayoutControls();
       autoAssign();
       renderLayouts();
       renderSlots();
@@ -128,6 +159,7 @@ $("pdf-input").addEventListener("change", async (e) => {
     state.slotCount = L.fixedCount || L.defaultCount || 3;
     $("slotcount").value = state.slotCount;
     $("slotcount-wrap").style.display = L.fixedCount ? "none" : "";
+    syncLayoutControls();
     autoAssign();
     renderSlots();
     status.textContent = `已加载 ${pages.length} 页，主题色 ${state.bgColor}`;
@@ -245,6 +277,7 @@ async function renderPreview() {
     pad: Math.round(Math.min(W,H) * padPct),
     gap: Math.round(Math.min(W,H) * gapPct),
     gapX: Math.round(Math.min(W,H) * gapXPct),
+    aspectRatios: getSelectedAspectRatios(n),
   };
   const slots = L.getSlots(W, H, opts, n);
 
@@ -350,3 +383,4 @@ $("download-btn").addEventListener("click", () => {
 
 // ---------- 启动 ----------
 renderLayouts();
+syncLayoutControls();

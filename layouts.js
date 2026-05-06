@@ -56,6 +56,45 @@ const LAYOUTS = [
     },
   },
   {
+    id: "vertical-3",
+    name: "纵向三图长图",
+    desc: "3 张图纵向拼成长图，按原比例完整显示",
+    fixedCount: 3,
+    autoCanvas: "vertical-stack",
+    preview: `<div class="blk" style="left:6%;top:4%;width:88%;height:28%"></div>
+              <div class="blk" style="left:6%;top:36%;width:88%;height:28%"></div>
+              <div class="blk" style="left:6%;top:68%;width:88%;height:28%"></div>`,
+    getSlots(W, H, o) {
+      const innerW = W - o.pad*2;
+      const innerH = H - o.pad*2;
+      const ratios = o.aspectRatios || [16/9, 16/9, 16/9];
+      const gapY = o.gap;
+      let cellW = innerW;
+      let heights = ratios.slice(0, 3).map((ratio) => cellW / Math.max(ratio, 0.01));
+      let totalH = heights.reduce((sum, h) => sum + h, 0) + 2*gapY;
+      if (totalH > innerH) {
+        const k = innerH / totalH;
+        cellW *= k;
+        heights = heights.map((h) => h * k);
+        totalH = heights.reduce((sum, h) => sum + h, 0) + 2*gapY;
+      }
+      const xStart = o.pad + (innerW - cellW) / 2;
+      const yStart = o.pad + (innerH - totalH) / 2;
+      const radius = Math.min(cellW, ...heights) * 0.02;
+      const slots = [];
+      let y = yStart;
+      for (let i=0;i<3;i++) {
+        slots.push({
+          x: xStart, y,
+          w: cellW, h: heights[i], radius, mode: 'contain',
+        });
+        y += heights[i] + gapY;
+      }
+      return slots;
+    },
+    slotLabel(i) { return `第 ${i+1} 张`; },
+  },
+  {
     id: "sidebar",
     name: "侧栏画廊",
     desc: "左侧 9 张小图 + 右侧 3 张大图（参考图1风格）",
