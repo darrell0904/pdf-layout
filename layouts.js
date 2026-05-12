@@ -95,6 +95,44 @@ const LAYOUTS = [
     slotLabel(i) { return `第 ${i+1} 张`; },
   },
   {
+    id: "vertical-3-34",
+    name: "纵向三图（3:4）",
+    desc: "3 张图纵向排列，画布保持所选比例（默认 3:4），按原图比例完整显示",
+    fixedCount: 3,
+    preview: `<div class="blk" style="left:8%;top:14%;width:84%;height:22%"></div>
+              <div class="blk" style="left:8%;top:39%;width:84%;height:22%"></div>
+              <div class="blk" style="left:8%;top:64%;width:84%;height:22%"></div>`,
+    getSlots(W, H, o) {
+      const innerW = W - o.pad*2;
+      const innerH = H - o.pad*2;
+      const ratios = o.aspectRatios || [16/9, 16/9, 16/9];
+      const gapY = o.gap;
+      let cellW = innerW;
+      let heights = ratios.slice(0, 3).map((ratio) => cellW / Math.max(ratio, 0.01));
+      let totalH = heights.reduce((sum, h) => sum + h, 0) + 2*gapY;
+      if (totalH > innerH) {
+        const k = innerH / totalH;
+        cellW *= k;
+        heights = heights.map((h) => h * k);
+        totalH = heights.reduce((sum, h) => sum + h, 0) + 2*gapY;
+      }
+      const xStart = o.pad + (innerW - cellW) / 2;
+      const yStart = o.pad + (innerH - totalH) / 2;
+      const radius = Math.min(cellW, ...heights) * 0.02;
+      const slots = [];
+      let y = yStart;
+      for (let i=0;i<3;i++) {
+        slots.push({
+          x: xStart, y,
+          w: cellW, h: heights[i], radius, mode: 'contain',
+        });
+        y += heights[i] + gapY;
+      }
+      return slots;
+    },
+    slotLabel(i) { return `第 ${i+1} 张`; },
+  },
+  {
     id: "sidebar",
     name: "侧栏画廊",
     desc: "左侧 9 张小图 + 右侧 3 张大图（参考图1风格）",
@@ -215,52 +253,6 @@ const LAYOUTS = [
               <div class="blk" style="left:36.5%;top:54%;width:27%;height:20%"></div>
               <div class="blk" style="left:67%;top:54%;width:27%;height:20%"></div>`,
     getSlots: (W,H,o,n) => gridSlots(W,H,o,n,3),
-  },
-  {
-    id: "grid3-34",
-    name: "3 列网格（3:4）",
-    desc: "三列等分，每张图按 3:4 比例居中显示",
-    defaultCount: 9, minCount: 3, maxCount: 30,
-    preview: `<div class="blk" style="left:7%;top:6%;width:26%;height:26%"></div>
-              <div class="blk" style="left:37%;top:6%;width:26%;height:26%"></div>
-              <div class="blk" style="left:67%;top:6%;width:26%;height:26%"></div>
-              <div class="blk" style="left:7%;top:36%;width:26%;height:26%"></div>
-              <div class="blk" style="left:37%;top:36%;width:26%;height:26%"></div>
-              <div class="blk" style="left:67%;top:36%;width:26%;height:26%"></div>
-              <div class="blk" style="left:7%;top:66%;width:26%;height:26%"></div>
-              <div class="blk" style="left:37%;top:66%;width:26%;height:26%"></div>
-              <div class="blk" style="left:67%;top:66%;width:26%;height:26%"></div>`,
-    getSlots(W, H, o, n) {
-      const cols = 3;
-      const rows = Math.ceil(n / cols);
-      const gapY = o.gap;
-      const gapX = o.gapX ?? o.gap;
-      const innerW = W - o.pad*2;
-      const innerH = H - o.pad*2;
-      // 每个 cell 强制 3:4（宽:高），按可用宽度算出 cellH，再看是否超出可用高度
-      let cellW = (innerW - (cols-1)*gapX) / cols;
-      let cellH = cellW * 4 / 3;
-      let totalH = rows*cellH + (rows-1)*gapY;
-      if (totalH > innerH) {
-        const k = innerH / totalH;
-        cellW *= k; cellH *= k;
-        totalH = rows*cellH + (rows-1)*gapY;
-      }
-      const blockW = cols*cellW + (cols-1)*gapX;
-      const xStart = o.pad + (innerW - blockW) / 2;
-      const yStart = o.pad + (innerH - totalH) / 2;
-      const radius = Math.min(cellW, cellH) * 0.03;
-      const slots = [];
-      for (let i=0;i<n;i++) {
-        const r = Math.floor(i/cols), c = i%cols;
-        slots.push({
-          x: xStart + c*(cellW+gapX),
-          y: yStart + r*(cellH+gapY),
-          w: cellW, h: cellH, radius, mode: 'cover',
-        });
-      }
-      return slots;
-    },
   },
   {
     id: "poster",
