@@ -217,6 +217,52 @@ const LAYOUTS = [
     getSlots: (W,H,o,n) => gridSlots(W,H,o,n,3),
   },
   {
+    id: "grid3-34",
+    name: "3 列网格（3:4）",
+    desc: "三列等分，每张图按 3:4 比例居中显示",
+    defaultCount: 9, minCount: 3, maxCount: 30,
+    preview: `<div class="blk" style="left:7%;top:6%;width:26%;height:26%"></div>
+              <div class="blk" style="left:37%;top:6%;width:26%;height:26%"></div>
+              <div class="blk" style="left:67%;top:6%;width:26%;height:26%"></div>
+              <div class="blk" style="left:7%;top:36%;width:26%;height:26%"></div>
+              <div class="blk" style="left:37%;top:36%;width:26%;height:26%"></div>
+              <div class="blk" style="left:67%;top:36%;width:26%;height:26%"></div>
+              <div class="blk" style="left:7%;top:66%;width:26%;height:26%"></div>
+              <div class="blk" style="left:37%;top:66%;width:26%;height:26%"></div>
+              <div class="blk" style="left:67%;top:66%;width:26%;height:26%"></div>`,
+    getSlots(W, H, o, n) {
+      const cols = 3;
+      const rows = Math.ceil(n / cols);
+      const gapY = o.gap;
+      const gapX = o.gapX ?? o.gap;
+      const innerW = W - o.pad*2;
+      const innerH = H - o.pad*2;
+      // 每个 cell 强制 3:4（宽:高），按可用宽度算出 cellH，再看是否超出可用高度
+      let cellW = (innerW - (cols-1)*gapX) / cols;
+      let cellH = cellW * 4 / 3;
+      let totalH = rows*cellH + (rows-1)*gapY;
+      if (totalH > innerH) {
+        const k = innerH / totalH;
+        cellW *= k; cellH *= k;
+        totalH = rows*cellH + (rows-1)*gapY;
+      }
+      const blockW = cols*cellW + (cols-1)*gapX;
+      const xStart = o.pad + (innerW - blockW) / 2;
+      const yStart = o.pad + (innerH - totalH) / 2;
+      const radius = Math.min(cellW, cellH) * 0.03;
+      const slots = [];
+      for (let i=0;i<n;i++) {
+        const r = Math.floor(i/cols), c = i%cols;
+        slots.push({
+          x: xStart + c*(cellW+gapX),
+          y: yStart + r*(cellH+gapY),
+          w: cellW, h: cellH, radius, mode: 'cover',
+        });
+      }
+      return slots;
+    },
+  },
+  {
     id: "poster",
     name: "海报式",
     desc: "1 大图 + 底部小图条",
